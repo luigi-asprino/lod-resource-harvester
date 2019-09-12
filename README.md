@@ -56,13 +56,11 @@ taskFile=src/main/resources/tasks_dbpedia.json
 
 ```
 public static void main(String[] args) {
-		try {
-			if (args.length > 0) {
-				HarvesterConfiguration.setConfigFile("/path/to/config/file");
-			}
-			Harvester.harvest(TaskBuilder.getTasks());
-		} catch (IOException | JSchException | SftpException | InterruptedException e) {
-			e.printStackTrace();
-		}
+	try {
+		HarvesterConfiguration.setConfigFile("/path/to/config/file");
+		Harvester.harvest(TaskBuilder.getTasks());
+	} catch (IOException | JSchException | SftpException | InterruptedException e) {
+		e.printStackTrace();
 	}
+}
 ```
