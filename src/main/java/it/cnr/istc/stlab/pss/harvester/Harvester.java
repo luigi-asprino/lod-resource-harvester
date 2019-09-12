@@ -35,7 +35,7 @@ import com.jcraft.jsch.JSchException;
 import com.jcraft.jsch.Session;
 import com.jcraft.jsch.SftpException;
 
-import it.cs.unibo.lgu.commons.file.FileUtils;
+import it.cnr.istc.stlab.lgu.commons.files.FileUtils;
 
 public class Harvester {
 
