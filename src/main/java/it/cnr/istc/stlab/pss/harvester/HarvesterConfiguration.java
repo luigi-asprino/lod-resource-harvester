@@ -20,8 +20,10 @@ public class HarvesterConfiguration {
 			Configurations configs = new Configurations();
 			Configuration config = configs.properties(CONFIGURATION_FILE);
 			this.taskFile = config.getString("taskFile");
-			this.privatePathKey = config.getString("privatePathKey");
-			this.excludeSSH = config.getBoolean("excludeSSH");
+			if (config.containsKey("privatePathKey"))
+				this.privatePathKey = config.getString("privatePathKey");
+			if (config.containsKey("excludeSSH"))
+				this.excludeSSH = config.getBoolean("excludeSSH");
 
 			logger.info("Configuration file {}\n{}", CONFIGURATION_FILE, toString());
 
@@ -48,7 +50,7 @@ public class HarvesterConfiguration {
 	public String getTaskFile() {
 		return taskFile;
 	}
-	
+
 	public boolean excludeSSH() {
 		return excludeSSH;
 	}
