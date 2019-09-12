@@ -3,11 +3,7 @@
 		{
 			"endpoint": "http://dbpedia.org/sparql/",
 			"sparqlResourceSelector": "prefix foaf: <http://xmlns.com/foaf/0.1/> select distinct ?resource {?resource a foaf:Person} LIMIT 10",
-			"localDestination": "DBpedia_Persons",
-			"triplesToAdd": [
-				"prefix dbo: <http://dbpedia.org/ontology/>  CONSTRUCT  {?base ?p ?o .} WHERE {?base ?p ?o .}"
-			],
-			"useOnlyConstruct": true
+			"localDestination": "DBpedia_Persons"
 		}
 	]
 }
