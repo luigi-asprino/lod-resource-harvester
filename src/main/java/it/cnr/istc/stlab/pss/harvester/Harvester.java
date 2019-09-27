@@ -236,7 +236,10 @@ public class Harvester {
 		if (!source.isUseOnlyConstruct())
 			m.add(getDataRelatedToRelatedToResource(resourceToGet, source, false));
 
-		m.add(m.createResource(resourceToGet), RDF.type, m.createResource("https://w3id.org/pss/CrawledResource"));
+		// adding additional patterns
+		if (!source.isUseOnlyConstruct()) {
+			m.add(m.createResource(resourceToGet), RDF.type, m.createResource("https://w3id.org/pss/CrawledResource"));
+		}
 
 		// adding additional predicates
 		Set<String> additionalResources = new HashSet<>();
