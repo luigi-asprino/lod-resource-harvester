@@ -26,8 +26,8 @@ import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.riot.RiotException;
 import org.apache.jena.vocabulary.RDF;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.log4j.LogManager;
+import org.apache.log4j.Logger;
 
 import com.jcraft.jsch.ChannelSftp;
 import com.jcraft.jsch.JSch;
@@ -39,7 +39,7 @@ import it.cnr.istc.stlab.lgu.commons.files.FileUtils;
 
 public class Harvester {
 
-	private static Logger logger = LoggerFactory.getLogger(Harvester.class);
+	private static Logger logger = LogManager.getLogger(Harvester.class);
 	private static final int NUMBER_OF_ATTEMPTS = 3;
 	// private static final long TIMEOUT_QUERY = 60000;
 	public static final long TIMEOUT_1_MINUTES = 2;
@@ -78,10 +78,11 @@ public class Harvester {
 			Set<String> resourcesToDownloadInThisTask = Sets.difference(resourcesToDownload,
 					alreadyDownloadedResources);
 
-			logger.info("Number of resource of type {} {}", t.getSource().getKlass(), resourcesToDownload.size());
-			logger.info("Number of resource already downloaded {}", alreadyDownloadedResources.size());
-			logger.info("Number of resources to download {}", resourcesToDownloadInThisTask.size());
-			logger.info("Limit {}", t.getLimit());
+			logger.info(String.format("Number of resource of type %s %s", t.getSource().getKlass(),
+					resourcesToDownload.size()));
+			logger.info(String.format("Number of resource already downloaded %s", alreadyDownloadedResources.size()));
+			logger.info(String.format("Number of resources to download %s", resourcesToDownloadInThisTask.size()));
+			logger.info(String.format("Limit %s", t.getLimit()));
 
 			List<String> resourcesOrdered = new ArrayList<>(resourcesToDownloadInThisTask);
 			if (t.getLimit() > 0)
@@ -98,11 +99,11 @@ public class Harvester {
 			int c = 0;
 			for (String resourceToGet : resourcesOrdered) {
 
-				logger.info("Getting resource {} {}", (c++ + "/" + resourcesToDownloadInThisTask.size()),
-						resourceToGet);
+				logger.info(String.format("Getting resource %s %s", c++ + "/" + resourcesToDownloadInThisTask.size(),
+						resourceToGet));
 
 				if (resourceToGet == null) {
-					logger.warn("Resource {}", resourceToGet);
+					logger.info(String.format("Resource {}", resourceToGet));
 					continue;
 				}
 
@@ -114,10 +115,11 @@ public class Harvester {
 						String filePath = storeResources(resourceToGet, t.getSource(), directory.getAbsolutePath());
 						if (t.getRemoteDestination() != null && !excludeSSH) {
 							// send to remote destination
-							logger.info("Uploading the resource on the remote destination {}", resourceToGet);
+							logger.info(String.format("Uploading the resource on the remote destination {}",
+									resourceToGet));
 							sendFile(channel, filePath,
 									t.getRemoteDestination().getFolderPath() + "/" + FilenameUtils.getName(filePath));
-							logger.info("Resource uploaded on the remote destination {}", resourceToGet);
+							logger.info(String.format("Resource uploaded on the remote destination {}", resourceToGet));
 						}
 						// resourceDownloaded = true;
 						break;
@@ -131,14 +133,14 @@ public class Harvester {
 						// some resources may have illegal characters and are discarded
 						logger.warn("Failed");
 						logger.error(e.getMessage());
-						logger.warn("Discarding {}", resourceToGet);
+						logger.warn(String.format("Discarding {}", resourceToGet));
 						errorsInDownloading = true;
 						e.printStackTrace();
 					} catch (Exception e) {
 						logger.warn("Failed " + e.getLocalizedMessage());
 						e.printStackTrace();
 						if (i < NUMBER_OF_ATTEMPTS) {
-							logger.warn("New attempt in {} seconds", (SLEEP_RETRY / 1000));
+							logger.info(String.format("New attempt in {} seconds", (SLEEP_RETRY / 1000)));
 							Thread.sleep(SLEEP_RETRY);
 						} else {
 							errorsInDownloading = true;
@@ -148,7 +150,7 @@ public class Harvester {
 				}
 
 				if (errorsInDownloading) {
-					logger.error("Impossible to download {}", resourceToGet);
+					logger.error(String.format("Impossible to download {}", resourceToGet));
 					fun.write((resourceToGet + "\n").getBytes());
 				}
 
@@ -190,7 +192,7 @@ public class Harvester {
 			session = jsch.getSession(user, host, port);
 			session.setPassword(password);
 			session.setConfig("StrictHostKeyChecking", "no");
-			logger.info("Establishing SSH Connection host {}", host);
+			logger.info(String.format("Establishing SSH Connection host {}", host));
 			session.connect();
 			logger.info("Connection established.");
 			logger.info("Creating SFTP Channel.");
@@ -208,7 +210,7 @@ public class Harvester {
 			java.util.Properties config = new java.util.Properties();
 			config.put("StrictHostKeyChecking", "no");
 			session.setConfig(config);
-			logger.info("Establishing SSH Connection host {}", host);
+			logger.info(String.format("Establishing SSH Connection host {}", host));
 			session.connect();
 			logger.info("Connection established.");
 			logger.info("Creating SFTP Channel.");
@@ -290,7 +292,7 @@ public class Harvester {
 			// pss.asQuery().toStrisng(Syntax.defaultQuerySyntax));
 			QueryExecution qexec = QueryExecutionFactory.sparqlService(source.getSparqlEndpoint(), pss.asQuery());
 			Model mr = qexec.execConstruct();
-			logger.trace("Triples returned {}", mr.size());
+			logger.trace(String.format("Triples returned {}", mr.size()));
 			m.add(mr);
 		}
 
@@ -303,7 +305,8 @@ public class Harvester {
 					+ ss.getPatternToIdentifyURIPointedToExternalSource() + "}";
 			ParameterizedSparqlString pssToGetRefIdentifier = new ParameterizedSparqlString(queryToGetRefIdentifier);
 			pssToGetRefIdentifier.setIri("resource", resourceToGet);
-			logger.trace("Executing {} \non {}", pssToGetRefIdentifier.asQuery().toString(Syntax.syntaxSPARQL_11));
+			logger.info(String.format("Executing {} \non {}",
+					pssToGetRefIdentifier.asQuery().toString(Syntax.syntaxSPARQL_11)));
 			QueryExecution qexec = QueryExecutionFactory.sparqlService(source.getSparqlEndpoint(),
 					pssToGetRefIdentifier.asQuery());
 			ResultSet rs = qexec.execSelect();
@@ -312,19 +315,19 @@ public class Harvester {
 				QuerySolution querySolution = (QuerySolution) rs.next();
 				refResource = querySolution.get("refResource").asResource().getURI();
 			}
-			logger.trace("Ref Resource {}", refResource);
+			logger.trace(String.format("Ref Resource {}", refResource));
 
 			// Prendi dati dalla sorgente secondaria
 			for (String queryForSecondaryResoruce : ss.getQueries()) {
 				ParameterizedSparqlString pssForSecondaryResource = new ParameterizedSparqlString(
 						queryForSecondaryResoruce);
 				pssForSecondaryResource.setIri("refResource", refResource);
-				logger.trace("Executing \n{}\non {}",
-						pssForSecondaryResource.asQuery().toString(Syntax.syntaxSPARQL_11), ss.getSparqlEndpoint());
+				logger.trace(String.format("Executing \n{}\non {}",
+						pssForSecondaryResource.asQuery().toString(Syntax.syntaxSPARQL_11), ss.getSparqlEndpoint()));
 				QueryExecution qexecQueryForSecondaryResource = QueryExecutionFactory
 						.sparqlService(ss.getSparqlEndpoint(), pssForSecondaryResource.asQuery());
 				Model toAdd = qexecQueryForSecondaryResource.execConstruct();
-				logger.trace("Number of triples from external resource {}", toAdd.size());
+				logger.trace(String.format("Number of triples from external resource {}", toAdd.size()));
 				m.add(toAdd);
 			}
 		}
@@ -334,7 +337,7 @@ public class Harvester {
 
 		m.write(new FileOutputStream(new File(filePath)), "RDF/XML");
 
-		logger.trace("{} written!", filePath);
+		logger.trace(String.format("{} written!", filePath));
 
 		return filePath;
 	}
@@ -357,8 +360,9 @@ public class Harvester {
 		QueryExecution qexec = QueryExecutionFactory.sparqlService(source.getSparqlEndpoint(), pss.asQuery());
 		qexec.setTimeout(TIMEOUT_1_MINUTES, TimeUnit.MINUTES, TIMEOUT_2_MINUTES, TimeUnit.MINUTES);
 
-		logger.trace("Executing\n{}\non {}, timeout1 {} timeout2 {}", pss.asQuery().toString(Syntax.defaultQuerySyntax),
-				source.getSparqlEndpoint(), qexec.getTimeout1(), qexec.getTimeout2());
+		logger.trace(String.format("Executing\n{}\non {}, timeout1 {} timeout2 {}",
+				pss.asQuery().toString(Syntax.defaultQuerySyntax), source.getSparqlEndpoint(), qexec.getTimeout1(),
+				qexec.getTimeout2()));
 		Model m = qexec.execConstruct();
 		m.setNsPrefixes(getPrefixes());
 		logger.trace("Done!");
@@ -389,8 +393,8 @@ public class Harvester {
 
 		pss_count.setIri("type", source.getKlass());
 
-		logger.trace("Sparql endpoint: {}", source.getSparqlEndpoint());
-		logger.trace("Executing\n{}", pss_count.asQuery().toString(Syntax.defaultQuerySyntax));
+		logger.trace(String.format("Sparql endpoint: {}", source.getSparqlEndpoint()));
+		logger.trace(String.format("Executing\n{}", pss_count.asQuery().toString(Syntax.defaultQuerySyntax)));
 
 		QueryExecution qexec_count = QueryExecutionFactory.sparqlService(source.getSparqlEndpoint(),
 				QueryFactory.create(pss_count.toString(), Syntax.syntaxSPARQL_11));
@@ -398,7 +402,7 @@ public class Harvester {
 		ResultSet rs_count = qexec_count.execSelect();
 		int count = Integer.parseInt(rs_count.next().getLiteral("c").getValue().toString());
 
-		logger.info("Retrieved {} {} ", count, source.getKlass());
+		logger.info(String.format("Retrieved {} {} ", count, source.getKlass()));
 
 		int numberOfResourcesPerQuery = 10000;
 		ParameterizedSparqlString pss = null;
@@ -438,7 +442,7 @@ public class Harvester {
 					qexec.close();
 					break;
 				} catch (Exception e) {
-					logger.error("Error in query excecution {}", e.getMessage());
+					logger.error(String.format("Error in query excecution {}", e.getMessage()));
 					Thread.sleep(SLEEP_RETRY);
 				}
 			}
@@ -449,6 +453,7 @@ public class Harvester {
 	}
 
 	private static Set<String> getResourcesUsingSparql(LODPrimarySource source) throws InterruptedException {
+		logger.info(String.format("Getting resources using sparql %s",source.getSparqlResourceSelector()));
 
 		Set<String> result = new HashSet<>();
 
