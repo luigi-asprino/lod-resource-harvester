@@ -1,0 +1,6 @@
+version: '2'
+services:
+  pss2:
+    build: ./pss
+    volumes:
+      - ./data/harvester:/opt/pss/pss.harvester/data

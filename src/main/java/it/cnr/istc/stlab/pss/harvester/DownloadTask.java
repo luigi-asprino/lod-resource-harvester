@@ -4,6 +4,7 @@ public class DownloadTask {
 
 	private LODPrimarySource source;
 	private int limit;
+	private int pagination=-1;
 	private LocalDestination localDestination;
 	private RemoteDestination remoteDestination;
 
@@ -45,6 +46,14 @@ public class DownloadTask {
 	
 	public int getLimit() {
 		return limit;
+	}
+
+	public int getPagination() {
+		return pagination;
+	}
+
+	public void setPagination(int pagination) {
+		this.pagination = pagination;
 	}
 
 }

@@ -90,7 +90,7 @@ public class Harvester {
 			resourcesOrdered.addAll(t.getSource().getResourcesToGet());
 
 			FileOutputStream f = new FileOutputStream(new File(d.getDownloadedFile()), true);
-			FileOutputStream fun = new FileOutputStream(new File(d.getDownloadedFile()), true);
+			FileOutputStream fun = new FileOutputStream(new File(d.getDownloadedFile()+"_errors"), true);
 			ChannelSftp channel = null;
 			if (t.getRemoteDestination() != null && !excludeSSH) {
 				channel = getChannel(t.getRemoteDestination().getUser(), t.getRemoteDestination().getPassword(),
@@ -133,7 +133,7 @@ public class Harvester {
 						// some resources may have illegal characters and are discarded
 						logger.warn("Failed");
 						logger.error(e.getMessage());
-						logger.warn(String.format("Discarding {}", resourceToGet));
+						logger.warn(String.format("Discarding %s", resourceToGet));
 						errorsInDownloading = true;
 						e.printStackTrace();
 					} catch (Exception e) {
@@ -150,8 +150,10 @@ public class Harvester {
 				}
 
 				if (errorsInDownloading) {
-					logger.error(String.format("Impossible to download {}", resourceToGet));
+					logger.error(String.format("Impossible to download %s", resourceToGet));
 					fun.write((resourceToGet + "\n").getBytes());
+				} else if (excludeSSH) {
+					f.write((resourceToGet + "\n").getBytes());
 				}
 
 				// mark the resource as already downloaded and uploaded
@@ -404,7 +406,7 @@ public class Harvester {
 
 		logger.info(String.format("Retrieved {} {} ", count, source.getKlass()));
 
-		int numberOfResourcesPerQuery = 10000;
+		int numberOfResourcesPerQuery = source.getPagination() > 0 ? source.getPagination() : 10000;
 		ParameterizedSparqlString pss = null;
 		if (source.getGraph() != null) {
 			// @f:off
@@ -453,16 +455,31 @@ public class Harvester {
 	}
 
 	private static Set<String> getResourcesUsingSparql(LODPrimarySource source) throws InterruptedException {
-		logger.info(String.format("Getting resources using sparql %s",source.getSparqlResourceSelector()));
-
+		logger.info(String.format("Getting resources using sparql %s", source.getSparqlResourceSelector()));
+		String actualQuery = source.getSparqlResourceSelector();
+		if (source.getPagination() > 0) {
+			actualQuery += " OFFSET ?o LIMIT ?l ";
+			logger.info("Use pagination, actual query: " + actualQuery);
+		}
+		ParameterizedSparqlString pss = new ParameterizedSparqlString(actualQuery);
+		int numberOfResourcesPerQuery = source.getPagination() > 0 ? source.getPagination() : 10000;
 		Set<String> result = new HashSet<>();
+		boolean stop = false;
+		for (int resources = 0; !stop; resources += numberOfResourcesPerQuery) {
 
-		QueryExecution qexec = QueryExecutionFactory.sparqlService(source.getSparqlEndpoint(),
-				QueryFactory.create(source.getSparqlResourceSelector(), Syntax.syntaxSPARQL_11));
-		ResultSet rs = qexec.execSelect();
-		while (rs.hasNext()) {
-			QuerySolution querySolution = rs.next();
-			result.add(querySolution.get("resource").asResource().getURI());
+			pss.setLiteral("o", resources);
+			pss.setLiteral("l", resources + numberOfResourcesPerQuery);
+			logger.info(String.format("Executing %s ", pss.asQuery().toString(Syntax.syntaxSPARQL_11)));
+
+			QueryExecution qexec = QueryExecutionFactory.sparqlService(source.getSparqlEndpoint(), pss.asQuery());
+			ResultSet rs = qexec.execSelect();
+			if (!rs.hasNext())
+				stop = true;
+			while (rs.hasNext()) {
+				QuerySolution querySolution = rs.next();
+				result.add(querySolution.get("resource").asResource().getURI());
+			}
+
 		}
 
 		return result;

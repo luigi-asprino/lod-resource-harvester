@@ -46,6 +46,11 @@ public class TaskBuilder {
 			if (taskJSON.has("limit") && !taskJSON.isNull("limit")) {
 				limit = taskJSON.getInt("limit");
 			}
+			
+			int pagination=-1;
+			if(taskJSON.has("pagination") && !taskJSON.isNull("pagination")) {
+				pagination= taskJSON.getInt("pagination");
+			}
 
 			String[] adpr = null;
 			if (taskJSON.has("additionalPredicates") && !taskJSON.isNull("additionalPredicates")) {
@@ -121,7 +126,7 @@ public class TaskBuilder {
 				// @f:off
 				result.add(new DownloadTask(
 						new LODPrimarySource(taskJSON.getString("endpoint"), graph, sparqlResourceSelector, klass, adpr,
-								pte, qta, filter, useOnlyConstruct).setSecondarySources(secondarySources)
+								pte, qta, filter, useOnlyConstruct,pagination).setSecondarySources(secondarySources)
 										.setResourcesToGet(resourcesToGet),
 						new LocalDestination(taskJSON.getString("localDestination")),
 						new RemoteDestination(remoteDestionationJSON.getString("host"),
@@ -134,7 +139,7 @@ public class TaskBuilder {
 				// @f:off
 				result.add(new DownloadTask(
 						new LODPrimarySource(taskJSON.getString("endpoint"), graph, sparqlResourceSelector, klass, adpr,
-								pte, qta, filter, useOnlyConstruct),
+								pte, qta, filter, useOnlyConstruct,pagination),
 						new LocalDestination(taskJSON.getString("localDestination")), null, limit));
 				// @f:off
 			}

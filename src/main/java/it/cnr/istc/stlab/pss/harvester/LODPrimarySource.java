@@ -23,6 +23,7 @@ public class LODPrimarySource {
 	private String[] additionalPredicates;
 	private String[] patternsToExpand;
 	private String[] queryToAdd;
+	private int pagination = -1;
 	private Set<String> entities;
 	private Set<String> entitiesDownloaded;
 	private List<LODSecondarySource> secondarySources = new ArrayList<>();
@@ -31,7 +32,7 @@ public class LODPrimarySource {
 
 	public LODPrimarySource(String sparqlEndpoint, String graph, String sparqlResourceSelector, String klass,
 			String[] additionalPredicates, String[] patternsToExpand, String[] queryToAdd, String filter,
-			boolean useOnlyConstruct) {
+			boolean useOnlyConstruct, int pagination) {
 		super();
 		this.sparqlEndpoint = sparqlEndpoint;
 		this.graph = graph;
@@ -42,12 +43,13 @@ public class LODPrimarySource {
 		this.queryToAdd = queryToAdd;
 		this.sparqlResourceSelector = sparqlResourceSelector;
 		this.useOnlyConstruct = useOnlyConstruct;
+		this.pagination = pagination;
 	}
 
 	public LODPrimarySource(String sparqlEndpoint, String graph, String[] additionalPredicates,
 			String[] patternsToExpand, String[] queryToAdd, String klass, String sparqlResourceSelector) {
 		this(sparqlEndpoint, graph, sparqlResourceSelector, klass, additionalPredicates, patternsToExpand, queryToAdd,
-				null, false);
+				null, false, -1);
 	}
 
 	public Set<String> getEntities() {
@@ -122,6 +124,14 @@ public class LODPrimarySource {
 
 	public void setUseOnlyConstruct(boolean useOnlyConstruct) {
 		this.useOnlyConstruct = useOnlyConstruct;
+	}
+
+	public int getPagination() {
+		return pagination;
+	}
+
+	public void setPagination(int pagination) {
+		this.pagination = pagination;
 	}
 
 }
