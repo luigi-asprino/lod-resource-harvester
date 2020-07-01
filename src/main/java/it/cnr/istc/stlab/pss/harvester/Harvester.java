@@ -62,7 +62,8 @@ public class Harvester {
 
 			// get list of resources to download
 			Set<String> resourcesToDownload = new HashSet<>();
-			if (t.getSource().getKlass() == null && t.getSource().getSparqlResourceSelector() == null) {
+			if (t.getSource().getKlass() == null && t.getSource().getSparqlResourceSelector() == null
+					&& t.getSource().getResourcesToGet().isEmpty()) {
 				throw new RuntimeException("Non è stato fornito nessun criterio per la selezione delle entità!");
 			}
 
@@ -70,7 +71,7 @@ public class Harvester {
 				resourcesToDownload = getResourcesOfAType(t.getSource());
 			} else if (t.getSource().getSparqlResourceSelector() != null) {
 				resourcesToDownload = getResourcesUsingSparql(t.getSource());
-			} else {
+			} else if (t.getSource().getResourcesToGet().isEmpty()) {
 				throw new RuntimeException(
 						"Non è stata fornita nè una classe nè una query poter selezionare le risorse da scaricare!");
 			}
@@ -85,12 +86,22 @@ public class Harvester {
 			logger.info(String.format("Limit %s", t.getLimit()));
 
 			List<String> resourcesOrdered = new ArrayList<>(resourcesToDownloadInThisTask);
-			if (t.getLimit() > 0)
+			if (t.getLimit() > 0 && resourcesOrdered.size()>t.getLimit())
 				resourcesOrdered = resourcesOrdered.subList(0, t.getLimit());
+
+			if (!t.getSource().getResourcesToGet().isEmpty()) {
+				logger.trace("Adding spot resources to get ");
+				for (String s : t.getSource().getResourcesToGet()) {
+					logger.trace(s);
+				}
+			} else {
+				logger.trace("No spost resource to add");
+			}
+
 			resourcesOrdered.addAll(t.getSource().getResourcesToGet());
 
 			FileOutputStream f = new FileOutputStream(new File(d.getDownloadedFile()), true);
-			FileOutputStream fun = new FileOutputStream(new File(d.getDownloadedFile()+"_errors"), true);
+			FileOutputStream fun = new FileOutputStream(new File(d.getDownloadedFile() + "_errors"), true);
 			ChannelSftp channel = null;
 			if (t.getRemoteDestination() != null && !excludeSSH) {
 				channel = getChannel(t.getRemoteDestination().getUser(), t.getRemoteDestination().getPassword(),
@@ -242,6 +253,7 @@ public class Harvester {
 
 		// adding additional patterns
 		if (!source.isUseOnlyConstruct()) {
+			logger.trace("Adding crawled resource");
 			m.add(m.createResource(resourceToGet), RDF.type, m.createResource("https://w3id.org/pss/CrawledResource"));
 		}
 
@@ -276,6 +288,7 @@ public class Harvester {
 					logger.trace(querySolution.getResource("resource").getURI());
 					additionalResources.add(querySolution.getResource("resource").getURI());
 				}
+				qexec.close();
 			}
 		}
 
@@ -296,6 +309,7 @@ public class Harvester {
 			Model mr = qexec.execConstruct();
 			logger.trace(String.format("Triples returned {}", mr.size()));
 			m.add(mr);
+			qexec.close();
 		}
 
 		// adding triples from other sources
@@ -318,6 +332,7 @@ public class Harvester {
 				refResource = querySolution.get("refResource").asResource().getURI();
 			}
 			logger.trace(String.format("Ref Resource {}", refResource));
+			qexec.close();
 
 			// Prendi dati dalla sorgente secondaria
 			for (String queryForSecondaryResoruce : ss.getQueries()) {
@@ -331,6 +346,7 @@ public class Harvester {
 				Model toAdd = qexecQueryForSecondaryResource.execConstruct();
 				logger.trace(String.format("Number of triples from external resource {}", toAdd.size()));
 				m.add(toAdd);
+				qexecQueryForSecondaryResource.close();
 			}
 		}
 
@@ -368,6 +384,7 @@ public class Harvester {
 		Model m = qexec.execConstruct();
 		m.setNsPrefixes(getPrefixes());
 		logger.trace("Done!");
+		qexec.close();
 
 		return m;
 	}
@@ -403,6 +420,7 @@ public class Harvester {
 
 		ResultSet rs_count = qexec_count.execSelect();
 		int count = Integer.parseInt(rs_count.next().getLiteral("c").getValue().toString());
+		qexec_count.close();
 
 		logger.info(String.format("Retrieved {} {} ", count, source.getKlass()));
 
@@ -479,6 +497,7 @@ public class Harvester {
 				QuerySolution querySolution = rs.next();
 				result.add(querySolution.get("resource").asResource().getURI());
 			}
+			qexec.close();
 
 		}
 

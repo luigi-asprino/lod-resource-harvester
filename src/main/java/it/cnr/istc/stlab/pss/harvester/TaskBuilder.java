@@ -5,11 +5,14 @@ import java.util.List;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import it.cnr.istc.stlab.lgu.commons.files.FileUtils;
 
-
 public class TaskBuilder {
+
+	private static Logger logger = LoggerFactory.getLogger(TaskBuilder.class);
 
 	public static List<DownloadTask> getTasks() {
 
@@ -46,10 +49,10 @@ public class TaskBuilder {
 			if (taskJSON.has("limit") && !taskJSON.isNull("limit")) {
 				limit = taskJSON.getInt("limit");
 			}
-			
-			int pagination=-1;
-			if(taskJSON.has("pagination") && !taskJSON.isNull("pagination")) {
-				pagination= taskJSON.getInt("pagination");
+
+			int pagination = -1;
+			if (taskJSON.has("pagination") && !taskJSON.isNull("pagination")) {
+				pagination = taskJSON.getInt("pagination");
 			}
 
 			String[] adpr = null;
@@ -65,6 +68,7 @@ public class TaskBuilder {
 			if (taskJSON.has("resourcesToGet") && !taskJSON.isNull("resourcesToGet")) {
 				JSONArray a = taskJSON.getJSONArray("resourcesToGet");
 				for (int ia = 0; ia < a.length(); ia++) {
+					logger.trace("adding spot resource " + a.getString(ia));
 					resourcesToGet.add(a.getString(ia));
 				}
 			}
@@ -139,7 +143,7 @@ public class TaskBuilder {
 				// @f:off
 				result.add(new DownloadTask(
 						new LODPrimarySource(taskJSON.getString("endpoint"), graph, sparqlResourceSelector, klass, adpr,
-								pte, qta, filter, useOnlyConstruct,pagination),
+								pte, qta, filter, useOnlyConstruct,pagination).setResourcesToGet(resourcesToGet),
 						new LocalDestination(taskJSON.getString("localDestination")), null, limit));
 				// @f:off
 			}
