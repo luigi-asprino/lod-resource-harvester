@@ -64,3 +64,15 @@ public static void main(String[] args) {
 	}
 }
 ```
+
+### Run from terminal
+
+You can run LOD Resource Harvester from terminal by running the following command
+
+```
+mvn exec:java -Dexec.mainClass="it.cnr.istc.stlab.pss.harvester.Main" -Dexec.args="src/main/resources/tasks_dbpedia.json"
+```
+
+### License
+
+LOD Resource Harvester is distributed under license 
