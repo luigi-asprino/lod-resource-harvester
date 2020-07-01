@@ -75,4 +75,4 @@ mvn exec:java -Dexec.mainClass="it.cnr.istc.stlab.pss.harvester.Main" -Dexec.arg
 
 ### License
 
-LOD Resource Harvester is distributed under license 
+LOD Resource Harvester is distributed under license [Apache 2.0](LICENSE).
