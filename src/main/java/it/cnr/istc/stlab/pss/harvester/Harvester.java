@@ -64,7 +64,7 @@ public class Harvester {
 			Set<String> resourcesToDownload = new HashSet<>();
 			if (t.getSource().getKlass() == null && t.getSource().getSparqlResourceSelector() == null
 					&& t.getSource().getResourcesToGet().isEmpty()) {
-				throw new RuntimeException("Non è stato fornito nessun criterio per la selezione delle entità!");
+				throw new RuntimeException("No harvesting criteria provided!");
 			}
 
 			if (t.getSource().getKlass() != null) {
@@ -73,7 +73,7 @@ public class Harvester {
 				resourcesToDownload = getResourcesUsingSparql(t.getSource());
 			} else if (t.getSource().getResourcesToGet().isEmpty()) {
 				throw new RuntimeException(
-						"Non è stata fornita nè una classe nè una query poter selezionare le risorse da scaricare!");
+						"No harvesting criteria provided!");
 			}
 
 			Set<String> resourcesToDownloadInThisTask = Sets.difference(resourcesToDownload,
